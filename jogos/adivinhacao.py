@@ -9,14 +9,19 @@ numero_secreto = 31
 def numero(tent):
 
     total_tentativas = tent
-    rodada = 1
 
-    while 0 < rodada <= total_tentativas:
+    for rodada in range(1, total_tentativas + 1):
 
-        palpite = int(input("Qual seu palpite para o numero Secreto ? "))
+        palpite = int(input("Digite seu palpite entre 1 e 100 ? "))
         errou = (palpite != numero_secreto)
         maior = (palpite > numero_secreto)
         menor = (palpite < numero_secreto)
+
+        if 1 >= palpite < 100:
+            print(f"Tentativa {rodada} de {total_tentativas}\n"
+                  f"Erro - Você digitou {palpite}"
+                  f"Digite um número entre 1 e 100")
+            continue
 
         if errou:
             if maior:
