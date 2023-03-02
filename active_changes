@@ -1,0 +1,202 @@
+#!/bin/bash
+PID=$$
+REAL_USER="$(ps -e -o cmd | grep -E "sshd: .*@$(ps -fh --pid $PID -o tty)" | grep -v grep | cut -d ' ' -f 2)"
+ERROR_COUNT=0
+WAIT=false
+GetJsonData() {
+	MAX_I=$(echo "${#SITES[@]}")
+	SITES_JSON=''
+	for SITE in ${SITES[@]}; do
+		I=$(((I + 1)))
+		if ! [ $I -eq $MAX_I ]; then
+			SITES_JSON="$(echo -e "$SITES_JSON\"$SITE\",")"
+		else
+			SITES_JSON="$(echo -e "$SITES_JSON\"$SITE\"")"
+		fi
+	done
+	echo '{ "redirect": false, "sites": ['" $(echo -e "$SITES_JSON") "'], "force_foreign_changes": true }'
+}
+RequestRun() {
+	JSON_DATA="$(GetJsonData)"
+	curl -s -X 'POST' \
+		-w "\nxxx-status_code=%{http_code}\n" \
+		-H 'accept: application/json' \
+		-H 'Content-Type: application/json' \
+		-H 'Authorization: Bearer automation 73773bda-3475-4299-b806-b2682e17b4d1' \
+		'http://10.17.183.5/master/check_mk/api/1.0/domain-types/activation_run/actions/activate-changes/invoke' \
+		-d "$JSON_DATA"
+}
+RequestWait() {
+	ACTIVATION_ID=$1
+	curl -s -X 'GET' \
+		-w "\nxxx-status_code=%{http_code}\n" \
+		-H 'accept: application/json' \
+		-H 'Content-Type: application/json' \
+		-H 'Authorization: Bearer automation 73773bda-3475-4299-b806-b2682e17b4d1' \
+		"http://10.17.183.5/master/check_mk/api/1.0/objects/activation_run/${ACTIVATION_ID}/actions/wait-for-completion/invoke"
+}
+WaitProcess(){
+	local WAIT_PID=$1
+	local START_TIME=$(date +%s)
+	while :;do
+		for i in '-' '\' '|' '/';do
+			local NOW=$(date +%s)
+			local DURATION_SECS=$(((NOW-START_TIME)))
+			if [ $(ps -fh --pid $WAIT_PID 2>/dev/null | wc -l) -gt 0 ];then
+				echo -ne "\\r"
+				echo -ne "$WAIT_PID (${DURATION_SECS}) ..................................: Aguardando... \033[1;33m[${i}]\033[0m "
+				sleep 0.05
+			else
+				echo -ne "\\r"
+				echo -e "$WAIT_PID (${DURATION_SECS}) ..................................: Processo concluido!\n"
+				break 2
+			fi
+		done
+	done
+}
+Startup() {
+	SITES=($*)
+	if [ -z "$SITES" ]; then
+		echo -e "\033[1;31mFalha: Parametro ou validacao invalidos!\033[0m"
+		return 1
+	fi
+	echo -e "\033[1;36mIniciando ativacao de alteracoes pendentes para:\033[0;36m ${SITES[@]}...\033[0m\n"
+	REQUEST_OUTPUT_FILE="/tmp/RqOutput.tmp"
+	RequestRun > $REQUEST_OUTPUT_FILE &
+	WaitProcess $!
+	OUT=$(cat $REQUEST_OUTPUT_FILE 2>/dev/null)
+	rm -f $REQUEST_OUTPUT_FILE 2>/dev/null
+	RESPONSE=$(echo "${OUT}" | grep -v "xxx-status_code")
+	STATUS_CODE=$(echo "${OUT}" | awk -F"=" '/^xxx-status_code/ {print $2}')
+	if [ $STATUS_CODE -eq 400 ]; then
+		UNKN_SITES=$(echo -e "$RESPONSE" | grep -Eo "Unknown site '[a-z]{3}'")
+		if [ -n "$UNKN_SITES" ]; then
+			UNKN_SITES_F=($(echo -e "$UNKN_SITES" | grep -Eo "'[a-z]{3}'" | sed "s/'//g"))
+			VALID_SITES=(${SITES[@]})
+			for UNKN_SITE in ${UNKN_SITES_F[@]}; do
+				VALID_SITES=($(echo -e "${VALID_SITES[@]}" | sed "s/$UNKN_SITE//g"))
+			done
+			if [ -n "$VALID_SITES" ]; then
+				echo -e "\033[1;33mSites invalidos removidos da lista de execucao:\033[0;33m ${UNKN_SITES_F[@]}\033[0m\n"
+				ERROR_COUNT=$(((ERROR_COUNT + 1)))
+				if [ $ERROR_COUNT -le 5 ]; then
+					Startup ${VALID_SITES[@]}
+				else
+					echo -e "\033[1;31mERROR ($STATUS_CODE):\n\033[0;31m${RESPONSE}\033[0m"
+					return 1
+				fi
+			else
+				echo -e "\033[1;31mFalha: Parametro ou validacao invalidos!\033[0m"
+				return 1
+			fi
+		else
+			echo -e "\033[1;31mERROR ($STATUS_CODE):\n\033[0;31m${RESPONSE}\033[0m"
+			return 1
+		fi
+	elif [ $STATUS_CODE -eq 302 ]; then
+		ACTIVATION_ID=$(echo "$RESPONSE" | grep -Eo '"id": ".*"' | cut -d' ' -f2 | sed -E 's/\"|,//g')
+		echo -e "\033[1;35mA ativacao esta em execucao...\033[0m"
+		while [ $STATUS_CODE -eq 302 ]; do
+			OUT=$(RequestWait $ACTIVATION_ID)
+			RESPONSE=$(echo "${OUT}" | grep -v "xxx-status_code")
+			STATUS_CODE=$(echo "${OUT}" | awk -F"=" '/^xxx-status_code/ {print $2}')
+			sleep 1
+		done
+		if [ $STATUS_CODE -eq 204 ]; then
+			echo -e "\033[1;32mAtivacao concluida com sucesso!\033[0m"
+			return 0
+		else
+			echo -e "\033[1;31mERROR ($STATUS_CODE):\n\033[0;31m${RESPONSE}\033[0m"
+			return 1
+		fi
+	elif [ $STATUS_CODE -eq 200 ]; then
+		echo -e "\033[1;32mAtivacao concluida com sucesso!\033[0m"
+		return 0
+	elif [ $STATUS_CODE -eq 409 ]; then
+		echo -e "\033[1;31mConflict: Some sites could not be activated.\033[0m"
+		return 1
+	elif [ $STATUS_CODE -eq 422 ]; then
+		echo -e "\033[1;31mUnprocessable Entity: There are no changes to be activated.\033[0m"
+		return 1
+	elif [ $STATUS_CODE -eq 423 ]; then
+		echo -e "\033[1;31mLocked: There is already an activation running.\033[0m"
+		return 1
+	else
+		echo -e "\033[1;31mERROR ($STATUS_CODE):\n\033[0;31m${RESPONSE}\033[0m"
+		return 1
+	fi
+}
+Main() {
+	local ARGS=($*)
+	if [ ${#ARGS[@]} -gt 0 ]; then
+		for ARG in ${ARGS[@]}; do
+			case ${ARG} in
+			-y)
+				WAIT=true
+				FLAGS+=(-y)
+				;;
+			-*)
+				echo -e "\033[1;31mErro: Parametro invalido!\033[0m"
+				exit 1
+				;;
+			esac
+		done
+		for FLAG in "${FLAGS[@]}"; do
+			for i in "${!ARGS[@]}"; do
+				if [[ ${ARGS[i]} = $FLAG ]]; then
+					unset 'ARGS[i]'
+				fi
+			done
+		done
+		for ARG in ${ARGS[@]}; do
+			if [ ${#ARG} -gt 3 ] && [ "${ARG}" != "master" ];then
+				echo -e "\033[1;31mValidacao: Parametro invalido! O nome das instancias/sites devem possuir no maximo 3 caracteres.\033[0m"
+				exit 1
+			fi
+		done
+	fi
+	if [ -z "$ARGS" ]; then
+		ARGS=($(cat /opt/omd/sites/master/etc/check_mk/multisite.d/sites.mk | grep -Eo "'url_prefix': 'http://([0-9]{1,3}\.){3}[0-9]{1,3}/[a-z]{3}/'" | grep -Eo '/[a-z]{3}/' | sed 's/\///g' | sort | sed 's/ind//g'))
+	fi
+	LOCK_FILE="/tmp/aplica-master.lock"
+	PID_LOCK=$(cat $LOCK_FILE 2>/dev/null)
+	if [ -n "$PID_LOCK" ]; then
+		PID_RUNNING=$(ps -fh --pid $PID_LOCK 2>/dev/null)
+		if [ -n "$PID_RUNNING" ]; then
+			echo -e "\033[1;33mJa existe uma aplicacao de mudancas em andamento em:\033[0m ${REAL_USER}"
+			if [ "$WAIT" != "true" ]; then
+				local USER_CONFIRM
+				USER_CONFIRM=1
+				while [ $USER_CONFIRM -gt 0 ]; do
+					echo "Deseja aguardar a conclusao e aplicar? (y or n)"
+					read -rp 'R: ' USER_RESPONSE
+					case ${USER_RESPONSE,,} in
+					y | s | yes | sim)
+						USER_CONFIRM=0
+						;;
+					n | no | nao | não)
+						exit 0
+						;;
+					*)
+						echo "Resposta invalida! Digite 'y' para sim ou 'n' para nao."
+						USER_CONFIRM=1
+						;;
+					esac
+				done
+			fi
+			#echo -e "Aguardando...\n"
+			#while [ $(ps -fh --pid $PID_LOCK 2>/dev/null | wc -l) -gt 0 ]; do
+			#	sleep 2
+			#done
+			echo ""
+			WaitProcess $PID_LOCK
+		else
+			rm -f $LOCK_FILE &>/dev/null
+		fi
+	fi
+	echo "$PID" >$LOCK_FILE
+	Startup ${ARGS[@]}
+	rm -f $LOCK_FILE &>/dev/null
+}
+
+Main $*
