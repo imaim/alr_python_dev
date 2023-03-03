@@ -1,11 +1,6 @@
 import random as rd
 
 
-print("********************************")
-print("Bem vindo ao jogo de adivinhação")
-print("********************************")
-
-
 def randomico():
     laco = 0
     numero_secreto = 0
@@ -21,7 +16,11 @@ def randomico():
         laco += 1
 
 
-def numero():
+def jogo_adivinhacao():
+
+    print("********************************")
+    print("Bem vindo ao jogo de adivinhação")
+    print("********************************")
 
     # numero_secreto = randomico()
     total_pontos = 1000
@@ -98,7 +97,3 @@ def numero():
             break
 
         rodada += 1
-
-
-numero()
-print(f"Fim do Jogo")
