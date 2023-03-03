@@ -97,3 +97,8 @@ def jogo_adivinhacao():
             break
 
         rodada += 1
+
+
+if __name__ == "__main__":
+    jogo_adivinhacao()
+
