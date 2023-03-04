@@ -3,14 +3,14 @@ def jogo_forca():
     print("Bem vindo ao jogo de Forca")
     print("********************************")
 
-    palavra_secreta = "banana"
+    palavra_secreta = "paralelepipedo"
     enforcou = False
     acertou = False
     palavra_forca = ["_"] * len(palavra_secreta)
 
     print(f"iniciando Jogo")
     nivel = int(input("Selecione um Nível\n"
-                      "(1) Fácil - (2) Médio (3) Difícil\n"))
+                      "(1) Fácil - (2) Médio (3) Difícil: "))
     if nivel == 1:
         mult_nivel = 2
     elif nivel == 2:
@@ -36,7 +36,7 @@ def jogo_forca():
                 print(f" Palavra # {' '.join(palavra_forca)}")
 
                 chute = input(f"Tentativa {index_tent} de {tent}\n"
-                              f"Digite uma letra\n")
+                              f"Digite uma letra: ")
                 chute = chute.strip()
                 chute = chute.lower()
 
