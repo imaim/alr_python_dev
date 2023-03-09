@@ -2,10 +2,10 @@
 class Conta:
     def __init__(self, numero, titular, saldo, limite):
         print(f"Construindo Objeto.... {self}")
-        self.numero = numero
-        self.titular = titular
-        self.saldo = saldo
-        self.limit = limite
+        self.__numero = numero
+        self.__titular = titular
+        self.__saldo = saldo
+        self.__limit = limite
 
     def extrato(self):
         print(f"Saldo {self.saldo} do Titular {self.titular}")
