@@ -10,9 +10,16 @@ class Conta:
     def extrato(self):
         print(f"Saldo {self.__saldo:.2f} do Titular {self.__titular}")
 
+    def __pode_sacar(self, valor_a_sacar):
+        valor_disponivel = self.__saldo + self.__limite
+        return valor_a_sacar <= valor_disponivel
+
     def saca(self, valor):
-        self.__saldo -= valor
-        print(f"Saldo {self.__saldo:.2f} do Titular {self.__titular}")
+        if self.__pode_sacar(valor):
+            self.__saldo -= valor
+            print(f"Saldo {self.__saldo:.2f} do Titular {self.__titular}")
+        else:
+            print(f"Saldo {self.__saldo:.2f} insuficiente do Titular {self.__titular}")
 
     def deposita(self, valor):
         self.__saldo += valor
