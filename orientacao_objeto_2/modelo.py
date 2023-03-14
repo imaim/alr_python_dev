@@ -40,10 +40,10 @@ class Serie(Programa):
         self._temporadas = temporadas
 
     @property
-    def get_nome(self):
+    def nome(self):
         return self._nome
 
-    @get_nome.setter
+    @nome.setter
     def nome(self, novo_nome):
         self._nome = novo_nome.title()
 
@@ -68,7 +68,7 @@ atlanta = Serie("atlanta", 2018, 2)
 print(f"{vingadores.nome.title()} - {vingadores.get_duracao} : {vingadores.get_likes}")
 vingadores.dar_like()
 vingadores.dar_like()
-print(f"{vingadores.nome.title()} - {vingadores.get_duracao} : {vingadores.get_likes}")
+print(f"{vingadores.nome} - {vingadores.get_duracao} : {vingadores.get_likes}")
 
 atlanta.nome = "Atllanta"
-print(f"{atlanta.nome.title()} - {atlanta.get_duracao} : {atlanta.get_likes}")
+print(f"{atlanta.nome.title()} - {atlanta.get_temporadas} : {atlanta.get_likes}")
