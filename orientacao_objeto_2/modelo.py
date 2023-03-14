@@ -1,74 +1,74 @@
-class Filme:
+class Programa:
+    def __init__(self, nome, ano):
+        self._nome = nome.title()
+        self._ano = ano
+        self._likes = 0
+
+
+class Filme(Programa):
     def __init__(self, nome, ano, duracao):
-        self.__nome = nome.title()
-        self.__ano = ano
-        self.__duracao = duracao
-        self.__likes = 0
+        super().__init__(nome, ano)
+        self._duracao = duracao
 
     @property
     def nome(self):
-        return self.__nome
+        return self._nome
 
     @nome.setter
     def nome(self, novo_nome):
-        self.__nome = novo_nome.title()
+        self._nome = novo_nome.title()
 
     @property
     def get_likes(self):
-        return self.__likes
+        return self._likes
 
     @property
     def get_ano(self):
-        return self.__ano
+        return self._ano
 
     @property
     def get_duracao(self):
-        return self.__duracao
+        return self._duracao
 
     def dar_like(self):
-        self.__likes += 1
+        self._likes += 1
 
 
-class Serie:
+class Serie(Programa):
     def __init__(self, nome, ano, temporadas):
-        self.__nome = nome.title()
-        self.__ano = ano
-        self.__temporadas = temporadas
-        self.__likes = 0
+        super().__init__(nome, ano)
+        self._temporadas = temporadas
 
     @property
     def get_nome(self):
-        return self.__nome
+        return self._nome
 
     @get_nome.setter
     def nome(self, novo_nome):
-        self.__nome = novo_nome.title()
+        self._nome = novo_nome.title()
 
     @property
     def get_likes(self):
-        return self.__likes
+        return self._likes
 
     @property
     def get_ano(self):
-        return self.__ano
+        return self._ano
 
     @property
     def get_temporadas(self):
-        return self.__temporadas
+        return self._temporadas
 
     def dar_like(self):
-        self.__likes += 1
+        self._likes += 1
 
 
 vingadores = Filme("vingadores guerra infinita", 2018, 160)
 atlanta = Serie("atlanta", 2018, 2)
-print(f"Nome: {vingadores.nome.title()} - Ano: {vingadores.get_ano} "
-      f"- Duração: {vingadores.get_duracao} min - Likes: {vingadores.get_likes}")
+print(f"{vingadores.nome.title()} - {vingadores.get_duracao} : {vingadores.get_likes}")
 vingadores.dar_like()
 vingadores.dar_like()
-print(f"Nome: {vingadores.nome.title()} - Ano: {vingadores.get_ano} "
-      f"- Duração: {vingadores.get_duracao} min - {vingadores.get_likes}")
+print(f"{vingadores.nome.title()} - {vingadores.get_duracao} : {vingadores.get_likes}")
 
 atlanta.nome = "Atllanta"
-print(f"Nome: {atlanta.nome.title()} - Ano: {atlanta.get_ano} "
-      f"- Temporadas: {atlanta.get_temporadas}")
+print(f"{atlanta.nome.title()} - {atlanta.get_duracao} : {atlanta.get_likes}")
