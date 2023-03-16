@@ -4,11 +4,17 @@ class Programa:
         self._ano = ano
         self._likes = 0
 
+    def __str__(self):
+        return f"{self.nome} - {self.get_ano} : {self.get_likes} Likes"
+
 
 class Filme(Programa):
     def __init__(self, nome, ano, duracao):
         super().__init__(nome, ano)
         self._duracao = duracao
+
+    def __str__(self):
+        return f"{self.nome} - {self._duracao} min - {self.get_ano} : {self.get_likes} Likes"
 
     @property
     def nome(self):
@@ -39,6 +45,9 @@ class Serie(Programa):
         super().__init__(nome, ano)
         self._temporadas = temporadas
 
+    def __str__(self):
+        return f"{self.nome} - {self._temporadas} Temporadas - {self.get_ano} : {self.get_likes} Likes"
+
     @property
     def nome(self):
         return self._nome
@@ -63,12 +72,38 @@ class Serie(Programa):
         self._likes += 1
 
 
+class Playlist:
+
+    def __init__(self, nome, programas):
+        self.nome = nome
+        self._programas = programas
+
+    @property
+    def listagem(self):
+        return self._programas
+
+    @property
+    def tamanho(self):
+        return len(self._programas)
+
+
 vingadores = Filme("vingadores guerra infinita", 2018, 160)
 atlanta = Serie("atlanta", 2018, 2)
-print(f"{vingadores.nome.title()} - {vingadores.get_duracao} : {vingadores.get_likes}")
+tmep = Filme("Todo mundo em panico", 1999, 100)
+demolidor = Serie("Demolidor", 2016, 2)
+# print(f"{vingadores.nome.title()} - {vingadores.get_duracao} : {vingadores.get_likes}")
+# print(f"{atlanta.nome.title()} - {atlanta.get_temporadas} : {atlanta.get_likes}")
+tmep.dar_like()
+tmep.dar_like()
+tmep.dar_like()
+demolidor.dar_like()
+demolidor.dar_like()
+atlanta.dar_like()
+atlanta.dar_like()
 vingadores.dar_like()
 vingadores.dar_like()
-print(f"{vingadores.nome} - {vingadores.get_duracao} : {vingadores.get_likes}")
+filmes_e_series = [vingadores, atlanta, demolidor, tmep]
+playlist_fim_de_semana = Playlist("fim de semana", filmes_e_series)
 
-atlanta.nome = "Atllanta"
-print(f"{atlanta.nome.title()} - {atlanta.get_temporadas} : {atlanta.get_likes}")
+for programa in playlist_fim_de_semana.listagem:
+    print(programa)
