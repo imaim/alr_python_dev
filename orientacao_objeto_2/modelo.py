@@ -91,8 +91,6 @@ class Playlist:
         return self._programas
 
 
-
-
 vingadores = Filme("vingadores guerra infinita", 2018, 160)
 atlanta = Serie("atlanta", 2018, 2)
 tmep = Filme("Todo mundo em panico", 1999, 100)
@@ -112,7 +110,6 @@ filmes_e_series = [vingadores, atlanta, demolidor, tmep]
 playlist_fim_de_semana = Playlist("fim de semana", filmes_e_series)
 
 print(f"O tamanho da Playlist é {len(playlist_fim_de_semana)}")
-#print(demolidor in playlist_fim_de_semana)
-
+# print(demolidor in playlist_fim_de_semana)
 for programa in playlist_fim_de_semana:
     print(programa)
