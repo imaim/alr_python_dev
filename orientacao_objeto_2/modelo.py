@@ -5,7 +5,7 @@ class Programa:
         self._likes = 0
 
     def __str__(self):
-        return f"{self.nome} - {self.get_ano} : {self.get_likes} Likes"
+        return f"{self._nome} - {self._ano} : {self._likes} Likes"
 
 
 class Filme(Programa):
@@ -78,13 +78,19 @@ class Playlist:
         self.nome = nome
         self._programas = programas
 
+    # methodo mágico de sequencia
+    def __getitem__(self, item):
+        return self._programas[item]
+
+    # methodo mágico de len(), importa um comportamento do modulo len()
+    def __len__(self):
+        return len(self._programas)
+
     @property
     def listagem(self):
         return self._programas
 
-    @property
-    def tamanho(self):
-        return len(self._programas)
+
 
 
 vingadores = Filme("vingadores guerra infinita", 2018, 160)
@@ -105,5 +111,8 @@ vingadores.dar_like()
 filmes_e_series = [vingadores, atlanta, demolidor, tmep]
 playlist_fim_de_semana = Playlist("fim de semana", filmes_e_series)
 
-for programa in playlist_fim_de_semana.listagem:
+print(f"O tamanho da Playlist é {len(playlist_fim_de_semana)}")
+#print(demolidor in playlist_fim_de_semana)
+
+for programa in playlist_fim_de_semana:
     print(programa)
